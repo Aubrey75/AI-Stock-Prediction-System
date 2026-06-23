@@ -53,48 +53,48 @@ def confirm_single_ticker(user_input, database_pool, prompt_name="股票代码")
     if ticker in database_pool:
         return ticker
 
-    print(f"\n你输入的{prompt_name} {ticker} 不存在。")
+    print(f"\nThe {prompt_name} you entered, {ticker}, does not exist.")
 
     matches = get_best_match_list(ticker, database_pool, n=3)
 
     if not matches:
-        print("系统没有找到接近的股票代码。")
+        print("The system could not find any similar stock tickers.")
         return None
 
-    print("你是不是想输入以下代码之一？")
+    print("Did you mean one of the following tickers?")
     for i, match in enumerate(matches, start=1):
         print(f"{i}. {match}")
 
     while True:
-        choice = input("请输入序号确认（1/2/3），或输入 N 重新手动输入: ").strip().upper()
+        choice = input("Enter a number to confirm (1/2/3), or enter N to manually type again: ").strip().upper()
 
         if choice == "N":
-            new_ticker = input(f"请重新输入正确的{prompt_name}: ").strip().upper()
+            new_ticker = input(f"Please re-enter the correct {prompt_name}: ").strip().upper()
 
             if new_ticker in database_pool:
-                print(f"你已确认使用: {new_ticker}")
+                print(f"Confirmed ticker: {new_ticker}")
                 return new_ticker
 
-            print(f"{new_ticker} 仍然不在数据库中。")
+            print(f"{new_ticker} is still not in the database.")
             new_matches = get_best_match_list(new_ticker, database_pool, n=3)
 
             if new_matches:
-                print("最接近的代码有：")
+                print("Closest matching tickers:")
                 for i, match in enumerate(new_matches, start=1):
                     print(f"{i}. {match}")
             else:
-                print("系统还是没有找到接近的代码。")
+                print("The system still could not find any similar tickers.")
 
         elif choice in ["1", "2", "3"]:
             idx = int(choice) - 1
             if idx < len(matches):
                 confirmed = matches[idx]
-                print(f"你已确认使用: {confirmed}")
+                print(f"Confirmed ticker: {confirmed}")
                 return confirmed
             else:
-                print("这个序号超出范围，请重新输入。")
+                print("This number is out of range. Please try again.")
         else:
-            print("输入无效，请重新输入。")
+            print("Invalid input. Please try again.")
 
 
 def parse_watchlist_with_confirmation(user_input, database_pool):
@@ -114,57 +114,63 @@ def parse_watchlist_with_confirmation(user_input, database_pool):
             cleaned.append(ticker)
             continue
 
-        print(f"\n你输入的关注股票代码 {ticker} 不存在。")
+        print(f"\nThe watchlist ticker you entered, {ticker}, does not exist.")
 
         matches = get_best_match_list(ticker, database_pool, n=3)
 
         if not matches:
-            print(f"{ticker} 没有找到接近的代码，已跳过。")
+            print(f"No similar tickers were found for {ticker}. Skipping...")
             continue
 
-        print("你是不是想输入以下代码之一？")
+        print("Did you mean one of the following tickers?")
         for i, match in enumerate(matches, start=1):
             print(f"{i}. {match}")
 
         while True:
             choice = input(
-                f"请为 {ticker} 输入序号确认（1/2/3），输入 N 重新手动输入，或输入 S 跳过: "
+                f"For {ticker}, enter a number to confirm (1/2/3), enter N to manually re-enter, or enter S to skip: "
             ).strip().upper()
 
             if choice == "S":
-                print(f"已跳过 {ticker}")
+                print(f"Skipped {ticker}")
                 break
 
             elif choice == "N":
-                new_ticker = input("请重新输入这个关注股票代码: ").strip().upper()
+                new_ticker = input("Please re-enter the watchlist ticker: ").strip().upper()
 
                 if new_ticker in database_pool:
                     if new_ticker not in cleaned:
                         cleaned.append(new_ticker)
-                    print(f"已确认加入: {new_ticker}")
+                    print(f"Added to watchlist: {new_ticker}")
                     break
                 else:
-                    print(f"{new_ticker} 不在数据库中。")
+                    print(f"{new_ticker} is not in the database.")
+
                     new_matches = get_best_match_list(new_ticker, database_pool, n=3)
+
                     if new_matches:
-                        print("最接近的代码有：")
+                        print("Closest matching tickers:")
                         for i, match in enumerate(new_matches, start=1):
                             print(f"{i}. {match}")
                     else:
-                        print("系统没有找到接近的代码。")
+                        print("The system could not find any similar tickers.")
 
             elif choice in ["1", "2", "3"]:
                 idx = int(choice) - 1
+
                 if idx < len(matches):
                     confirmed = matches[idx]
+
                     if confirmed not in cleaned:
                         cleaned.append(confirmed)
-                    print(f"已确认加入: {confirmed}")
+
+                    print(f"Added to watchlist: {confirmed}")
                     break
                 else:
-                    print("这个序号超出范围，请重新输入。")
+                    print("This number is out of range. Please try again.")
+
             else:
-                print("输入无效，请重新输入。")
+                print("Invalid input. Please try again.")
 
     return cleaned
 
@@ -243,46 +249,47 @@ def main():
         "MP","HCA","MAR","HLT","RCL","CCL",
     ]
 
-    print("\n数据库内可用股票数量:", len(database_pool))
-    print("示例: AAPL, NVDA, TSLA, MSFT")
+    print("\nNumber of Available Stocks in Database:", len(database_pool))
+    print("Examples: AAPL, NVDA, TSLA, MSFT")
 
-    stock_code_input = input("\n请输入你要重点分析的股票代码: ")
+    stock_code_input = input("\nEnter the stock ticker you want to analyze: ")
+
     stock_code = confirm_single_ticker(
         stock_code_input,
         database_pool,
-        prompt_name="重点分析股票代码"
+        prompt_name="stock ticker"
     )
 
     if stock_code is None:
-        print("无法确认重点分析股票代码，程序结束。")
+        print("Unable to confirm the stock ticker. Program terminated.")
         return
 
     watchlist_input = input(
-        "请输入你关注的股票列表（用逗号分隔，例如 AAPL,NVDA,TSLA,MSFT）: "
+        "Enter your watchlist (comma separated):(Separated by commas, for example AAPL,NVDA,TSLA,MSFT）: "
     ).strip()
 
     watchlist = parse_watchlist_with_confirmation(watchlist_input, database_pool)
 
     if len(watchlist) == 0:
-        print("你确认后的关注股票列表为空。")
+        print("The list of stocks you follow after confirmation is empty.")
         return
 
-    print("\n你的关注股票列表:", watchlist)
+    print("\nYour list of stocks to follow：", watchlist)
 
     # =========================
     # 下载重点分析股票数据
     # =========================
-    print("\n正在下载重点分析股票数据...")
+    print("\nKey analysis stock data is being downloaded...")
     data = yf.download(stock_code, start="2020-01-01", auto_adjust=False, progress=False)
 
     if data.empty:
-        print("数据下载失败，请检查股票代码。")
+        print("Data download failed. Please check the stock code.")
         return
 
     data = prepare_data(data)
 
     if len(data) < 100:
-        print("数据不足，无法完成训练。")
+        print("The data is insufficient to complete the training")
         return
 
     features = ["Return", "MA5", "MA20", "MA_Diff", "Volume_Change", "RSI"]
@@ -342,24 +349,26 @@ def main():
     down_prob_5d = probability_5d[0]
     up_prob_5d = probability_5d[1]
 
-    print("\n========== 你的股票预测结果 ==========")
-    print("股票代码:", stock_code)
-    print("明天模型准确率:", round(accuracy_1d, 4))
-    print("未来5天模型准确率:", round(accuracy_5d, 4))
+    print("\n========== Your stock prediction results ==========")
+    print("Stock Ticker:", stock_code)
+    print("1-Day Model Accuracy:", round(accuracy_1d, 4))
+    print("5-Day Model Accuracy:", round(accuracy_5d, 4))
 
     if prediction_1d == 1:
-        print("\n明天预测: 可能上涨 📈")
+        print("\nTomorrow Forecast: UP ")
     else:
-        print("\n明天预测: 可能下跌 📉")
-    print("明天上涨概率:", f"{up_prob_1d:.2%}")
-    print("明天下跌概率:", f"{down_prob_1d:.2%}")
+        print("\nTomorrow Forecast: DOWN ")
+
+    print("Probability of Increase Tomorrow:", f"{up_prob_1d:.2%}")
+    print("Probability of Decrease Tomorrow:", f"{down_prob_1d:.2%}")
 
     if prediction_5d == 1:
-        print("\n未来5天趋势: 偏上涨 📈")
+        print("\n5-Day Forecast: BULLISH ")
     else:
-        print("\n未来5天趋势: 偏下跌 📉")
-    print("未来5天上涨概率:", f"{up_prob_5d:.2%}")
-    print("未来5天下跌概率:", f"{down_prob_5d:.2%}")
+        print("\n5-Day Forecast: BEARISH ")
+
+    print("Probability of Increase in 5 Days:", f"{up_prob_5d:.2%}")
+    print("Probability of Decrease in 5 Days:", f"{down_prob_5d:.2%}")
 
     # =========================
     # 回测（基于明天预测）
@@ -386,12 +395,12 @@ def main():
     else:
         sharpe_ratio = 0.0
 
-    print("\n========== 回测结果（基于明天预测） ==========")
-    print("AI交易次数:", total_trades)
-    print("盈利交易比例:", f"{win_rate:.2%}")
-    print("AI策略总收益:", f"{total_return_strategy:.2%}")
-    print("Buy & Hold总收益:", f"{total_return_market:.2%}")
-    print("最大回撤:", f"{max_drawdown:.2%}")
+    print("\n========== Backtest Performance ==========")
+    print("Total AI Trades:", total_trades)
+    print("Win Rate:", f"{win_rate:.2%}")
+    print("AI Strategy Return:", f"{total_return_strategy:.2%}")
+    print("Buy & Hold Return:", f"{total_return_market:.2%}")
+    print("Maximum Drawdown:", f"{max_drawdown:.2%}")
     print("Sharpe Ratio:", round(sharpe_ratio, 2))
 
     # =========================
@@ -428,12 +437,12 @@ def main():
     # =========================
     # 推荐股票（只从用户关注列表中推荐）
     # =========================
-    print("\n========== 关注列表中的推荐结果 ==========")
+    print("\n========== Follow the recommended results in the list ==========")
 
     recommendations = []
 
     if len(watchlist) == 0:
-        print("你的关注列表为空，无法推荐。")
+        print("Your follow list is empty and cannot be recommended.")
         return
 
     try:
@@ -446,7 +455,7 @@ def main():
             threads=True
         )
     except Exception:
-        print("关注列表数据下载失败。")
+        print("The download of the follow list data failed。")
         return
 
     if len(watchlist) == 1:
@@ -473,7 +482,7 @@ def main():
 
     else:
         if not isinstance(all_data.columns, pd.MultiIndex):
-            print("关注列表数据格式异常。")
+            print("Pay attention to the abnormal format of the list data.")
             return
 
         level0_values = set(all_data.columns.get_level_values(0))
@@ -485,7 +494,7 @@ def main():
         elif watchlist[0] in level1_values:
             ticker_level = 1
         else:
-            print("关注列表数据格式异常。")
+            print("Pay attention to the abnormal format of the list data.")
             return
 
         for ticker in watchlist:
@@ -518,22 +527,21 @@ def main():
                 continue
 
     recommendations.sort(key=lambda x: x[3], reverse=True)
-
     if len(recommendations) == 0:
-        print("今天没有推荐的股票。")
+        print("No stock recommendations available today.")
     else:
-        print("\n推荐股票排名：")
+        print("\nTop Stock Recommendations:")
         for i, (ticker, prob_1d, prob_5d, score) in enumerate(recommendations, start=1):
             print(
-                f"{i}. {ticker}  |  明天上涨概率: {prob_1d:.2%}  |  未来5天上涨概率: {prob_5d:.2%}  |  综合推荐分数: {score:.2%}"
+                f"{i}. {ticker}  |  1-Day Up Probability: {prob_1d:.2%}  |  5-Day Up Probability: {prob_5d:.2%}  |  Recommendation Score: {score:.2%}"
             )
 
         best_ticker, best_prob_1d, best_prob_5d, best_score = recommendations[0]
-        #新增图像
+
         # =========================
-        # 推荐股票单独回测图
+        # Backtest Chart for Top Recommendation
         # =========================
-        print(f"\n正在生成推荐股票 {best_ticker} 的回测图...")
+        print(f"\nGenerating backtest chart for {best_ticker}...")
 
         rec_data = yf.download(
             best_ticker,
@@ -567,17 +575,19 @@ def main():
             plt.legend()
             plt.show()
 
-        print("\n⭐ 今日最强推荐股票:")
+        print("\n🏆 Best Stock Recommendation:")
         print(
-            f"{best_ticker}  |  明天上涨概率: {best_prob_1d:.2%}  |  未来5天上涨概率: {best_prob_5d:.2%}  |  综合推荐分数: {best_score:.2%}"
+            f"{best_ticker}  |  1-Day Up Probability: {best_prob_1d:.2%}  |  5-Day Up Probability: {best_prob_5d:.2%}  |  Recommendation Score: {best_score:.2%}"
         )
 
         if len(recommendations) > 1:
             second_ticker, second_prob_1d, second_prob_5d, second_score = recommendations[1]
-            print("\n⭐⭐ 次强推荐股票:")
+
+            print("\n🥈 Runner-Up Recommendation:")
             print(
-                f"{second_ticker}  |  明天上涨概率: {second_prob_1d:.2%}  |  未来5天上涨概率: {second_prob_5d:.2%}  |  综合推荐分数: {second_score:.2%}"
+                f"{second_ticker}  |  1-Day Up Probability: {second_prob_1d:.2%}  |  5-Day Up Probability: {second_prob_5d:.2%}  |  Recommendation Score: {second_score:.2%}"
             )
+
 
 
 if __name__ == "__main__":
